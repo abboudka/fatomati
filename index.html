@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0620">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="رسالة">
+<meta name="format-detection" content="telephone=no">
+<title>رسالة</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;600&family=Cairo:wght@500;600&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#0d0620; --violet:#7c3aed; --lilac:#a78bfa; --pink:#ec4899; --ink:#f4ecff;
+  --msg:'El Messiri','Geeza Pro','Amiri','Noto Naskh Arabic',serif;
+  --ui:'Cairo','Geeza Pro','Segoe UI',system-ui,sans-serif;
+  box-sizing:border-box;
+}
+*,*::before,*::after{box-sizing:inherit;-webkit-tap-highlight-color:transparent}
+html{height:100%;height:-webkit-fill-available;background:var(--bg);-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{
+  position:fixed;top:0;right:0;bottom:0;left:0;margin:0;overflow:hidden;overscroll-behavior:none;
+  touch-action:manipulation;background:linear-gradient(180deg,#160a33 0%,var(--bg) 55%,#080314 100%);
+  -webkit-font-smoothing:antialiased;
+}
+
+/* slow aurora (GPU transforms only) */
+.orb{position:fixed;border-radius:50%;pointer-events:none;will-change:transform;-webkit-backface-visibility:hidden;backface-visibility:hidden;transform:translate3d(0,0,0)}
+.o1{width:100vmax;height:100vmax;left:-45vmax;top:-40vmax;background:radial-gradient(circle,rgba(124,58,237,.85),transparent 62%);animation:m1 34s ease-in-out infinite}
+.o2{width:90vmax;height:90vmax;right:-40vmax;bottom:-35vmax;background:radial-gradient(circle,rgba(236,72,153,.6),transparent 62%);animation:m2 40s ease-in-out infinite}
+.o3{width:70vmax;height:70vmax;left:5vmax;top:30%;background:radial-gradient(circle,rgba(167,139,250,.5),transparent 62%);animation:m3 30s ease-in-out infinite}
+@keyframes m1{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(38vmax,30vmax,0) scale(1.2)}}
+@keyframes m2{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-36vmax,-28vmax,0) scale(1.25)}}
+@keyframes m3{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-34vmax,-22vmax,0) scale(.8)}}
+
+canvas{position:fixed;top:0;right:0;bottom:0;left:0;width:100%;height:100%;pointer-events:none}
+.grain{position:fixed;top:0;right:0;bottom:0;left:0;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+
+/* safe areas: notch/home bar in portrait, side notch in landscape */
+.page{
+  position:fixed;top:0;right:0;bottom:0;left:0;display:flex;flex-direction:column;align-items:center;
+  padding-top:calc(env(safe-area-inset-top,0px) + 20px);
+  padding-bottom:calc(env(safe-area-inset-bottom,0px) + 22px);
+  padding-right:calc(env(safe-area-inset-right,0px) + 26px);
+  padding-left:calc(env(safe-area-inset-left,0px) + 26px);
+}
+.message{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;width:100%;max-width:520px;text-align:center}
+.mark{width:40px;height:37px;flex:none;filter:drop-shadow(0 0 14px rgba(236,72,153,.85));animation:pulse 4s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+
+/* ✏️ EDIT THE MESSAGE: the text inside <p id="text"> below */
+#text{
+  margin:0;font-family:var(--msg);font-weight:600;
+  font-size:clamp(30px,8.6vw,46px);line-height:1.8;color:var(--ink);
+  text-shadow:0 0 36px rgba(167,139,250,.7),0 0 80px rgba(236,72,153,.35);
+  text-wrap:balance;-webkit-user-select:none;user-select:none;
+}
+
+.actions{width:100%;max-width:420px;display:flex;flex-direction:column;gap:12px;flex:none}
+.btn{
+  width:100%;height:56px;border-radius:28px;padding:0 20px;margin:0;
+  font:600 17px/1 var(--ui);color:var(--ink);text-align:center;
+  background:linear-gradient(135deg,rgba(124,58,237,.34),rgba(236,72,153,.2));
+  border:1px solid rgba(196,181,253,.38);
+  box-shadow:0 10px 30px rgba(76,29,149,.35),inset 0 1px 0 rgba(255,255,255,.18);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  -webkit-appearance:none;appearance:none;cursor:pointer;touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  transition:transform .15s ease,background .2s ease,border-color .2s ease;
+}
+.btn:active{transform:scale(.97);background:linear-gradient(135deg,rgba(139,92,246,.6),rgba(236,72,153,.4));border-color:rgba(255,200,230,.7)}
+.btn:focus-visible{outline:2px solid var(--lilac);outline-offset:3px}
+
+/* page 2 (after "yes"): deeper purple */
+.page{transition:opacity .7s ease,visibility .7s}
+.page.hide{opacity:0;visibility:hidden;pointer-events:none}
+.orb{transition:opacity 1.6s ease}
+.o4{width:90vmax;height:90vmax;right:-40vmax;bottom:-35vmax;background:radial-gradient(circle,rgba(139,92,246,.9),transparent 62%);animation:m2 40s ease-in-out infinite;opacity:0}
+.tint{position:fixed;top:0;right:0;bottom:0;left:0;pointer-events:none;background:linear-gradient(180deg,#2e1070 0%,#14063f 55%,#0b0226 100%);opacity:0;transition:opacity 1.6s ease}
+.two .tint{opacity:1}
+.two .o2{opacity:0}
+.two .o4{opacity:1}
+#p2 .mark,#p3 .mark{filter:drop-shadow(0 0 14px rgba(167,139,250,.95))}
+#p2,#p3{display:block;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.letter{width:100%;max-width:520px;margin:0 auto;padding:6px 0 8px;display:flex;flex-direction:column;align-items:center;gap:22px}
+#p2 .mark,#p3 .mark{margin-top:6px;animation:none;opacity:1}
+.card{width:100%;padding:30px 18px 32px;border-radius:30px;text-align:center;
+  background:linear-gradient(165deg,rgba(124,58,237,.26),rgba(22,8,64,.5));border:1px solid rgba(196,181,253,.22);
+  box-shadow:0 18px 50px rgba(12,2,40,.45),inset 0 1px 0 rgba(255,255,255,.12);
+  font-family:var(--msg);font-weight:500;font-size:clamp(19px,5.1vw,22px);line-height:2.1;color:var(--ink)}
+.card p{margin:0}
+.card p+p{margin-top:1.5em}
+.card p.big{font-size:1.45em;font-weight:600;line-height:1.7;text-shadow:0 0 24px rgba(167,139,250,.7)}
+.card p.plain{white-space:pre-line;text-wrap:balance;font-size:clamp(18px,4.9vw,21px);line-height:2.1}
+.card p.end{font-size:1.4em;font-weight:600;line-height:1.7;color:#fff;text-shadow:0 0 26px rgba(196,181,253,.8)}
+#p2 .btn{max-width:420px;margin-top:2px;-webkit-backdrop-filter:none;backdrop-filter:none;background:linear-gradient(135deg,rgba(139,92,246,.55),rgba(124,58,237,.35))}
+.grain{display:none}
+#p3{padding-right:calc(env(safe-area-inset-right,0px) + 18px);padding-left:calc(env(safe-area-inset-left,0px) + 18px)}
+#p2,#p3{touch-action:pan-y}
+
+/* popup */
+.modal{position:fixed;top:0;right:0;bottom:0;left:0;z-index:10;display:flex;align-items:center;justify-content:center;
+  padding:calc(env(safe-area-inset-top,0px) + 24px) calc(env(safe-area-inset-right,0px) + 24px) calc(env(safe-area-inset-bottom,0px) + 24px) calc(env(safe-area-inset-left,0px) + 24px);
+  background:rgba(8,3,20,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  opacity:0;visibility:hidden;transition:opacity .3s ease,visibility .3s}
+.modal.open{opacity:1;visibility:visible}
+.sheet{position:relative;width:100%;max-width:360px;padding:40px 26px 38px;border-radius:30px;text-align:center;
+  background:linear-gradient(160deg,rgba(124,58,237,.55),rgba(36,14,76,.82));border:1px solid rgba(196,181,253,.42);
+  box-shadow:0 30px 80px rgba(20,5,50,.7),0 0 60px rgba(124,58,237,.4),inset 0 1px 0 rgba(255,255,255,.2);
+  transform:translateY(26px) scale(.94);transition:transform .5s cubic-bezier(.2,.9,.3,1.15)}
+.modal.open .sheet{transform:none}
+.sheet-heart{display:block;width:34px;height:31px;margin:0 auto 14px;filter:drop-shadow(0 0 12px rgba(236,72,153,.85));animation:pulse 4s ease-in-out infinite}
+.sheet p{margin:0;font-family:var(--msg);font-weight:600;font-size:clamp(26px,7.4vw,34px);line-height:1.8;color:var(--ink);text-shadow:0 0 30px rgba(167,139,250,.7);text-wrap:balance}
+.sheet .btn{margin-top:26px}
+.x{position:absolute;top:12px;left:12px;width:40px;height:40px;border-radius:50%;padding:0;margin:0;display:flex;align-items:center;justify-content:center;
+  border:0;background:rgba(255,255,255,.12);color:var(--ink);-webkit-appearance:none;appearance:none;cursor:pointer;touch-action:manipulation}
+.x:active{background:rgba(255,255,255,.24)}
+
+/* big beating heart (page 3) */
+.heartwrap{position:relative;width:min(72vw,270px);aspect-ratio:84/68;margin:14px auto 20px;flex:none}
+.halo{position:absolute;left:-30%;right:-30%;top:-30%;bottom:-30%;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.55),transparent 62%);opacity:.35;animation:halo 1.6s ease-out infinite;will-change:opacity,transform}
+.bigheart{position:absolute;left:0;top:0;width:100%;height:100%;transform-origin:50% 55%;animation:hb 1.6s cubic-bezier(.3,0,.2,1) infinite;will-change:transform}
+.bigheart svg{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 16px rgba(167,139,250,.9))}
+.bigheart span{position:absolute;left:0;right:0;top:48%;transform:translateY(-50%);text-align:center;font-family:var(--msg);font-weight:600;font-size:clamp(20px,6.2vw,27px);line-height:1.3;color:#fff;text-shadow:0 1px 10px rgba(40,10,110,.9)}
+@keyframes hb{0%{transform:scale(1)}9%{transform:scale(1.13)}18%{transform:scale(.99)}28%{transform:scale(1.07)}40%{transform:scale(1)}100%{transform:scale(1)}}
+@keyframes halo{0%{opacity:.35;transform:scale(.95)}9%{opacity:.95;transform:scale(1.08)}18%{opacity:.4;transform:scale(1)}28%{opacity:.7;transform:scale(1.03)}45%{opacity:.35;transform:scale(.95)}100%{opacity:.35;transform:scale(.95)}}
+
+/* landscape (iPhone on its side): message on top, buttons side by side */
+@media (orientation:landscape) and (max-height:500px){
+  .page{padding-top:calc(env(safe-area-inset-top,0px) + 10px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 12px)}
+  .message{gap:10px}
+  .mark{width:28px;height:26px}
+  #text{font-size:clamp(22px,7.5vh,34px);line-height:1.6}
+  .actions{flex-direction:row;max-width:520px;gap:10px}
+  .btn{height:44px;border-radius:22px;font-size:15px}
+}
+
+.mark,#text,.actions{opacity:0;animation:in 1.6s cubic-bezier(.2,.7,.2,1) forwards}
+.mark{animation:in 1.6s cubic-bezier(.2,.7,.2,1) .2s forwards,pulse 4s ease-in-out 1.8s infinite}
+#text{animation-delay:.6s}
+.actions{animation-delay:1.3s}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.mark,#text,.actions{opacity:1;animation:none}}
+</style>
+</head>
+<body>
+<div class="tint"></div>
+<div class="orb o1"></div>
+<div class="orb o2"></div>
+<div class="orb o3"></div>
+<div class="orb o4"></div>
+<canvas id="c" aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+
+<main class="page" id="p1">
+  <section class="message">
+    <svg class="mark" viewBox="0 0 32 29" aria-hidden="true">
+      <defs><linearGradient id="hg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c4b5fd"/><stop offset="1" stop-color="#ec4899"/></linearGradient></defs>
+      <path fill="url(#hg)" d="M23.6 0c-2.9 0-5.5 1.5-7.6 4C13.9 1.5 11.3 0 8.4 0 3.8 0 0 3.8 0 8.4c0 9.5 14.7 18.5 16 20.6 1.3-2.1 16-11.1 16-20.6C32 3.8 28.2 0 23.6 0z"/>
+    </svg>
+    <p id="text">فاطمة انتي ضايجه من القسم؟</p>
+  </section>
+
+  <div class="actions">
+    <button class="btn" id="yes" type="button">اي</button>
+    <button class="btn" id="no" type="button">لا</button>
+  </div>
+</main>
+
+<main class="page hide" id="p2" aria-hidden="true">
+  <article class="letter">
+    <svg class="mark" viewBox="0 0 32 29" aria-hidden="true">
+      <defs><linearGradient id="hg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ddd6fe"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+      <path fill="url(#hg2)" d="M23.6 0c-2.9 0-5.5 1.5-7.6 4C13.9 1.5 11.3 0 8.4 0 3.8 0 0 3.8 0 8.4c0 9.5 14.7 18.5 16 20.6 1.3-2.1 16-11.1 16-20.6C32 3.8 28.2 0 23.6 0z"/>
+    </svg>
+    <div id="text2" class="card">
+      <p class="big">فطوماتي حبيبه روحي واغلى ما عندي بهاي الدنيا , حبيبتي</p>
+      <p>اعرف انتي ضايجه من هذا القسم وكارهه الجامعه كلها اصلا</p>
+      <p>واعرف متريدين تداومين واذا داومتي متدخلين محاظرات لان مداخله من كل كلبج بس حبيبي هذا الي كتبه الج رب العالمين واني كلي ثقه برب العالمين هو كتبلج احسن شي الج و اني وياج بكلشي</p>
+      <p>و القسم سهل والله اذا حبيتيه الحاسوب كلش كلش كلش سهل والرياضيات سهله لان بس مقدمه راح تاخذين واصلا راح تشوفين رياضيات السادس اصعب منه</p>
+      <p>و اني وياج حتى بالرياضيات و الميكانيك و اي ماده افتهمها واشرح الج اي شي مفهمتي انتي و احاول اساعدج بالقرايه اشوفلج احسن طريقه وكلشي اكدر عليه راح اسوي حتى تصير سهله عليج واني اصلا متاكد سهله عليج انتي فاطمه مو اي وحده</p>
+      <p>انتي حبيبتي القويه الي هي مصدر قوتي بهاي الدنيا انتي الي ميكدر يوكفج شي واني سندج بكلشي</p>
+      <p>اعرف شكد تكرهين الرياضيات بس هسه تصير سهله عليج والله بس تتعودين عليه و راح تحبيه و راح يصير عندج شي تافه وماكو شي يصعب عليج انتي والله اني كلي ثقه بيج</p>
+      <p>و اعرف انتي كد الثقه وجربت هذا الشي قبل وانطيتج كل ثقتي و مفشلتيني و انتي نجحتي والباقيات رسبن و هذا الشي ما انساه</p>
+      <p class="end">بطله انتي وحق الله بطلةةةةةةة وماكو مثلج انتي</p>
+    </div>
+    <button class="btn" id="btn2" type="button">احبك 😔</button>
+  </article>
+</main>
+
+<main class="page hide" id="p3" aria-hidden="true">
+  <article class="letter">
+    <svg class="mark" viewBox="0 0 32 29" aria-hidden="true"><path fill="url(#hg2)" d="M23.6 0c-2.9 0-5.5 1.5-7.6 4C13.9 1.5 11.3 0 8.4 0 3.8 0 0 3.8 0 8.4c0 9.5 14.7 18.5 16 20.6 1.3-2.1 16-11.1 16-20.6C32 3.8 28.2 0 23.6 0z"/></svg>
+    <div id="text3" class="card">
+      <p class="plain">واريد اذكرج بشي ثاني ... اني وياج بكل شي بهاي الدنيا
+كلشي تمرين بيه مهما يكون صعب اني راح اكون سند الج
+نعيش الايام الحلوه والمره سويه و اصلا ماكو ايام مره واحنا
+سوا لان شكو يوم انتي بيه هو يوم حلو بالنسبه الي
+احلى ايام حياتي هي ايامي وياج وان شاء الله عمري كله
+راح يصير حلو لان اني راح اعيشه وياج انتي
+فاطمتي , حبيبه كلبي انتي
+لتخلين شي يضوجج او ياخذ تفكيرج ماكو شي بهاي الدنيا
+يسوى اميرتي تضوج علموده ماقبل تضوجين علمود اي شي اني
+شلون تضوجين والني وياجج؟؟؟ ميصير حبيبيييييي
+ننوشتي تدرين اني شكد احبج؟ يمكن تعرفين اني احبج كلش
+بس متعرفين شكد
+شايفه هذا الكون شكبره؟
+اني احبج بكده اضعاف واضغاف اكثر انسانه حبيتها بحياتي هي انتي
+مستحيل احب اي بشر بهاي الدنيا بكد ما حبيتج اني ومستحيل اكو احد
+بالدنيا يحبج بكدي ابدددددد انتي مو قطعه من روحي لا هذا قليل انتي روحي كلها
+انتي مو نص مني انتي كلي
+احبج بشكل مو طبيعي والله🥹🥹
+حبيبتي انتي بطلتي
+اريد من عندج ترفعين راسي بالكليه ( مكلت ترفعين راس اهلج لان اني اهلج )
+واريد تشوفيني شكد قويه انتي و شراح تسويننننننننننننننننننن
+وهذا الموقع مراح يوكف راح يبقى ذكرى
+بيوم من الايام را تتخرجين وانتي احسن وحده وراح تتذكرين هذا اليوم</p>
+    </div>
+    <div class="heartwrap" role="img" aria-label="ام مريومتي">
+      <div class="halo"></div>
+      <div class="bigheart">
+        <svg viewBox="-42 -42 84 68" aria-hidden="true">
+          <path d="M0 21C-54 -12 -30 -54 0 -24C30 -54 54 -12 0 21Z" fill="rgba(139,92,246,.88)"/>
+        </svg>
+        <span>ام مريومتي</span>
+      </div>
+    </div>
+  </article>
+</main>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="sheet">
+    <svg class="sheet-heart" viewBox="0 0 32 29" aria-hidden="true"><path fill="url(#hg)" d="M23.6 0c-2.9 0-5.5 1.5-7.6 4C13.9 1.5 11.3 0 8.4 0 3.8 0 0 3.8 0 8.4c0 9.5 14.7 18.5 16 20.6 1.3-2.1 16-11.1 16-20.6C32 3.8 28.2 0 23.6 0z"/></svg>
+    <p>لتجذبين عليه حبيبي</p>
+    <button class="btn" id="ok" type="button">حاضر</button>
+  </div>
+</div>
+
+<div class="modal" id="modal2" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="sheet">
+    <svg class="sheet-heart" viewBox="0 0 32 29" aria-hidden="true"><path fill="url(#hg)" d="M23.6 0c-2.9 0-5.5 1.5-7.6 4C13.9 1.5 11.3 0 8.4 0 3.8 0 0 3.8 0 8.4c0 9.5 14.7 18.5 16 20.6 1.3-2.1 16-11.1 16-20.6C32 3.8 28.2 0 23.6 0z"/></svg>
+    <p>اني هم 😔</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  var cv=document.getElementById('c'),ctx=cv.getContext('2d');
+  var W=0,H=0,dpr=Math.min(window.devicePixelRatio||1,2),items=[],raf=0,last=0,rt=0;
+  var cols=['196,181,253','236,72,153','167,139,250','255,182,220','139,92,246'];
+
+  function size(){W=window.innerWidth;H=window.innerHeight;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0)}
+
+  function heartPath(g,s){
+    g.beginPath();g.moveTo(0,s*.35);
+    g.bezierCurveTo(-s*.9,-s*.2,-s*.5,-s*.9,0,-s*.4);
+    g.bezierCurveTo(s*.5,-s*.9,s*.9,-s*.2,0,s*.35);g.closePath();
+  }
+  /* each particle is drawn once into a small sprite, then just stamped every frame (much lighter on iPhone than live shadows) */
+  function sprite(p){
+    var sz=Math.ceil(p.s*2+p.s*1.8);
+    var c=document.createElement('canvas');c.width=c.height=Math.round(sz*dpr);
+    var g=c.getContext('2d');g.scale(dpr,dpr);g.translate(sz/2,sz/2);
+    if(p.heart){
+      g.shadowColor='rgba('+p.c+',.9)';g.shadowBlur=p.s*.9*dpr;
+      if(p.outline){g.lineWidth=1.3;g.strokeStyle='rgba('+p.c+',1)';heartPath(g,p.s);g.stroke()}
+      else{g.fillStyle='rgba('+p.c+',.8)';heartPath(g,p.s);g.fill()}
+    }else{
+      var r=sz/2,gr=g.createRadialGradient(0,0,0,0,0,r);
+      gr.addColorStop(0,'rgba('+p.c+',1)');gr.addColorStop(1,'rgba('+p.c+',0)');
+      g.fillStyle=gr;g.beginPath();g.arc(0,0,r,0,6.283);g.fill();
+    }
+    p.img=c;p.sz=sz;
+  }
+  function make(init){
+    var heart=Math.random()<.6,s=heart?10+Math.random()*34:2+Math.random()*9;
+    var p={x:Math.random()*W,y:init?Math.random()*H:H+s*3+Math.random()*60,s:s,heart:heart,
+      v:.22+Math.random()*.4*(1-s/60),sw:10+Math.random()*26,ph:Math.random()*6.28,sp:.004+Math.random()*.008,
+      rot:(Math.random()-.5)*.5,a:.2+Math.random()*.5,c:cols[(Math.random()*cols.length)|0],
+      outline:heart&&Math.random()<.3};
+    sprite(p);return p;
+  }
+  function frame(ts){
+    /* delta-time: same slow speed on 60Hz and 120Hz ProMotion */
+    var dt=last?Math.min((ts-last)/16.667,3):1;last=ts;
+    ctx.clearRect(0,0,W,H);
+    for(var i=0;i<items.length;i++){
+      var p=items[i];p.y-=p.v*dt;p.ph+=p.sp*dt;
+      var x=p.x+Math.sin(p.ph)*p.sw,f=Math.min(1,Math.max(0,p.y/(H*.2)));
+      ctx.globalAlpha=p.a*f;
+      if(p.heart){
+        ctx.save();ctx.translate(x,p.y);ctx.rotate(p.rot+Math.sin(p.ph)*.15);
+        ctx.drawImage(p.img,-p.sz/2,-p.sz/2,p.sz,p.sz);ctx.restore();
+      }else ctx.drawImage(p.img,x-p.sz/2,p.y-p.sz/2,p.sz,p.sz);
+      if(p.y<-p.s*3)items[i]=make(false);
+    }
+    ctx.globalAlpha=1;
+    raf=requestAnimationFrame(frame);
+  }
+  function start(){
+    cancelAnimationFrame(raf);last=0;size();
+    var n=Math.round(Math.min(44,Math.max(26,W/8)));
+    items=[];for(var i=0;i<n;i++)items.push(make(true));
+    raf=requestAnimationFrame(frame);
+  }
+  var lastW=window.innerWidth;
+  function onResize(){
+    clearTimeout(rt);
+    rt=setTimeout(function(){
+      /* Safari's toolbar changing height shouldn't restart the hearts */
+      if(window.innerWidth!==lastW){lastW=window.innerWidth;start()}else{size()}
+    },200);
+  }
+  window.addEventListener('resize',onResize);
+  window.addEventListener('orientationchange',onResize);
+  document.addEventListener('visibilitychange',function(){
+    cancelAnimationFrame(raf);last=0;
+    if(!document.hidden)raf=requestAnimationFrame(frame);
+  });
+  start();
+
+  var modal=document.getElementById('modal');
+  function openM(){modal.classList.add('open');modal.setAttribute('aria-hidden','false')}
+  function closeM(){modal.classList.remove('open');modal.setAttribute('aria-hidden','true')}
+  document.getElementById('no').addEventListener('click',openM);
+  document.getElementById('ok').addEventListener('click',closeM);
+  modal.addEventListener('click',function(e){if(e.target===modal)closeM()});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeM()});
+
+  document.getElementById('yes').addEventListener('click',function(){
+    var p1=document.getElementById('p1'),p2=document.getElementById('p2');
+    p1.classList.add('hide');p1.setAttribute('aria-hidden','true');
+    p2.classList.remove('hide');p2.setAttribute('aria-hidden','false');
+    document.body.classList.add('two');
+    cols=['221,214,254','196,181,253','167,139,250','139,92,246','124,58,237'];
+    for(var i=0;i<items.length;i++){items[i].c=cols[(Math.random()*cols.length)|0];sprite(items[i])}
+  });
+  var btn2=document.getElementById('btn2'),modal2=document.getElementById('modal2'),busy=false;
+  btn2.addEventListener('click',function(){
+    if(busy)return;busy=true;
+    modal2.classList.add('open');modal2.setAttribute('aria-hidden','false');
+    setTimeout(function(){
+      modal2.classList.remove('open');modal2.setAttribute('aria-hidden','true');
+      var p2=document.getElementById('p2'),p3=document.getElementById('p3');
+      p2.classList.add('hide');p2.setAttribute('aria-hidden','true');
+      p3.scrollTop=0;p3.classList.remove('hide');p3.setAttribute('aria-hidden','false');
+    },1800);
+  });
+})();
+</script>
+</body>
+</html>
